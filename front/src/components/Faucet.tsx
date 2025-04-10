@@ -21,12 +21,24 @@ export default function Faucet() {
 
   const onSubmit = async (data: FaucetFormData) => {
     try {
-      // TODO: Implementar la llamada al servidor
-      console.log('Faucet form submitted:', data);
+      const response = await fetch("http://localhost:3000/faucet", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address: data.address })
+      });
+      
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Error en la solicitud');
+      }
+      console.log('Respuesta del servidor:', responseData);
       toast.success('Solicitud enviada correctamente');
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Error al procesar la solicitud');
+      toast.error(error instanceof Error ? error.message : 'Error al procesar la solicitud');
     }
   };
 

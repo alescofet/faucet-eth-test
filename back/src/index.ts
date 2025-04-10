@@ -34,6 +34,11 @@ app.post('/faucet', async (req, res) => {
 
     // TODO: Implementar la lógica de transferencia de ETH
     // Esto se completará cuando tengamos el nodo ETH configurado
+    console.log('Recibida peticion de faucet:', {
+      success: true,
+      message: 'Solicitud de ETH recibida',
+      address
+    });
     
     res.json({
       success: true,

@@ -63,7 +63,7 @@ export default function Faucet() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">Solicitar ETH</Button>
+            <Button type="submit" className="w-full cursor-pointer">Solicitar ETH</Button>
           </form>
         </Form>
       </CardContent>

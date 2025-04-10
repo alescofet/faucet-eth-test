@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  ethereum-node:
+    image: ethereum/client-go:latest
+    ports:
+      - "8545:8545"  # RPC
+      - "8546:8546"  # WebSocket
+      - "30303:30303"  # P2P
+    volumes:
+      - ./ethereum-data:/root/.ethereum
+    command:
+      - --dev  # Modo desarrollo con PoA
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.api=eth,net,web3,personal
+      - --http.corsdomain=*
+      - --ws
+      - --ws.addr=0.0.0.0
+      - --ws.api=eth,net,web3
+      - --ws.origins=*
+      - --nodiscover
+      - --allow-insecure-unlock
+      - --mine
+      - --miner.threads=1
+      - --networkid=1337

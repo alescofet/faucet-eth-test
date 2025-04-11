@@ -17,6 +17,7 @@ app.use(express.json());
 
 // Web3 setup (se configurará más adelante con el nodo Docker)
 const web3 = new Web3();
+web3.setProvider(process.env.ETH_NODE_URL as string);
 
 // Rutas básicas
 app.get('/health', (req, res) => {
@@ -24,7 +25,7 @@ app.get('/health', (req, res) => {
 });
 
 // Ruta para solicitar ETH del faucet
-app.post('/faucet', async (req, res) => {
+app.post('/api/faucet/:address/:amount', async (req, res) => {
   try {
     const { address } = req.body;
     
@@ -47,6 +48,33 @@ app.post('/faucet', async (req, res) => {
     });
   } catch (error) {
     console.error('Error en la solicitud del faucet:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+app.get('/api/balance/:address', async (req, res) => {
+  try {
+    const { address } = req.params;
+    
+    if (!address || !web3.utils.isAddress(address)) {
+      return res.status(400).json({ error: 'Dirección ETH inválida' });
+    }
+    
+    const weiBalance = await web3.eth.getBalance(address);
+    const balance = web3.utils.fromWei(weiBalance, 'ether');
+    
+    console.log('Recibida check de balance de cuenta:', {
+      address,
+      balance
+    });
+    
+    res.status(200).json({
+      success:true,
+      address,
+      balance
+    });
+  } catch (error) {
+    console.error('Error en la solicitud de balance:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });

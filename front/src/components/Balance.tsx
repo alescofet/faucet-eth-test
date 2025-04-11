@@ -21,9 +21,16 @@ export default function Balance() {
 
   const onSubmit = async (data: BalanceFormData) => {
     try {
-      // TODO: Implementar la llamada al servidor
-      console.log('Balance form submitted:', data);
-      toast.success('Consulta realizada correctamente');
+      const response = await fetch(`http://localhost:3000/api/balance/${data.address}`, {
+        method: 'GET',})
+        const responseData = await response.json();
+        const {balance} = responseData;
+      
+        if (!response.ok) {
+          throw new Error(responseData.error || 'Error en la solicitud');
+        }
+        console.log('Success', responseData);
+        toast.success(`Balance actual: ${balance} ETH`);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al consultar el balance');
@@ -31,7 +38,7 @@ export default function Balance() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="mx-auto w-full max-w-md">
       <CardHeader>
         <CardTitle>Consultar Balance</CardTitle>
       </CardHeader>

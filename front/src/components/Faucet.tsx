@@ -21,21 +21,18 @@ export default function Faucet() {
 
   const onSubmit = async (data: FaucetFormData) => {
     try {
-      const response = await fetch("http://localhost:3000/faucet", {
+      const response = await fetch(`http://localhost:3000/api/faucet/${data.address}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ address: data.address })
       });
       
       const responseData = await response.json();
       
+      
       if (!response.ok) {
         throw new Error(responseData.error || 'Error en la solicitud');
       }
-      console.log('Respuesta del servidor:', responseData);
-      toast.success('Solicitud enviada correctamente');
+      console.log('Respuesta:', responseData);
+      toast.success(`Respuesta: ${JSON.stringify(responseData)}`);
     } catch (error) {
       console.error('Error:', error);
       toast.error(error instanceof Error ? error.message : 'Error al procesar la solicitud');
@@ -43,7 +40,7 @@ export default function Faucet() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="mx-auto w-full max-w-md">
       <CardHeader>
         <CardTitle>Faucet</CardTitle>
       </CardHeader>

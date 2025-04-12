@@ -2,6 +2,7 @@ import Web3 from 'web3';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import fs from 'fs';
 import helmet from 'helmet';
 
 // Configuración de variables de entorno
@@ -25,10 +26,25 @@ app.get('/health', (req, res) => {
 });
 
 // Ruta para solicitar ETH del faucet
-app.post('/api/faucet/:address/:amount', async (req, res) => {
+app.post('/api/faucet/:address', async (req, res) => {
   try {
-    const { address } = req.body;
-    
+    const { address } = req.params;
+    const route = "../nodo/data/keystore/UTC--2025-04-10T22-35-24.522674685Z--84cea1efca4e43fba51534b14fa9660d635c7913"
+    const jsonFile = fs.readFileSync(route, 'utf8');
+    const wallet = await web3.eth.accounts.decrypt(jsonFile, process.env.FAUCET_PASSWORD as string);
+    const tx = {
+      from: wallet.address,
+      to: address,
+      value: web3.utils.toWei(process.env.FAUCET_AMOUNT as string, 'ether'),
+      gas: 21000,
+      gasPrice: web3.utils.toWei('10', 'gwei')
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, wallet.privateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    console.log('Transacción enviada:', receipt.transactionHash);
+    console.log(wallet)
+
+
     if (!address || !web3.utils.isAddress(address)) {
       return res.status(400).json({ error: 'Dirección ETH inválida' });
     }

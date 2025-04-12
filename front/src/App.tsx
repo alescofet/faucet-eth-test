@@ -5,6 +5,7 @@ import Faucet from './components/Faucet';
 import Home from './components/Home';
 import { Toaster } from 'sonner';
 import Transfer from './components/Transfer';
+import { WalletProvider } from './context/WalletContext';
 
 const router = createBrowserRouter([
   {
@@ -49,8 +50,10 @@ function Root() {
 function App() {
   return (
     <>
-      <RouterProvider router={router} />
-      <Toaster richColors position="bottom-center" />
+      <WalletProvider>
+        <RouterProvider router={router} />
+        <Toaster richColors position="bottom-center" />
+      </WalletProvider>
     </>
   );
 }

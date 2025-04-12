@@ -3,49 +3,51 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Loader2 } from 'lucide-react';
+import { ethers } from 'ethers';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const transferSchema = z.object({
   address: z.string().min(42, 'La dirección debe tener 42 caracteres').max(42),
-  amount: z.string().min(1, 'El monto es requerido'),
+  amount: z.string()
+    .min(1, 'El monto es requerido')
+    .regex(/^\d+(\.\d+)?$/, 'El monto debe ser un número válido')
+    .transform((val) => val.replace(/^0+(?=\d)/, ''))
 });
 
 type TransferFormData = z.infer<typeof transferSchema>;
 
 export default function Transfer() {
   const { account, isConnected, setBalance } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<TransferFormData>({
     resolver: zodResolver(transferSchema),
   });
 
   const onSubmit = async (data: TransferFormData) => {
+    try {
+    setIsLoading(true);
     if (!isConnected) {
       toast.error('Por favor, conecta tu wallet primero');
       return;
     }
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    if (!provider) {
+      throw new Error('MetaMask no está instalado');
+    }
+    const signer = await provider.getSigner(account);
+    const transaction = await signer.sendTransaction({
+      to: data.address,
+      value: ethers.parseEther(data.amount),
+    });
+    const tx = await transaction.wait();
+      // Esperar a que la transacción sea minada
 
-    try {
-      const response = await fetch('http://localhost:3000/api/transfer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: account,
-          to: data.address,
-          amount: data.amount
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Error en la solicitud');
-      }
 
       // Actualizar el balance después de la transferencia
       const balanceResponse = await fetch(`http://localhost:3000/api/balance/${account}`);
@@ -54,11 +56,13 @@ export default function Transfer() {
         setBalance(balanceData.balance);
       }
 
-      toast.success('Transferencia realizada correctamente');
+      toast.success('Transacción enviada. Hash: ' + tx?.hash);
       form.reset();
     } catch (error) {
       console.error('Error:', error);
       toast.error(error instanceof Error ? error.message : 'Error al procesar la transferencia');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -95,13 +99,33 @@ export default function Transfer() {
                   <FormItem>
                     <FormLabel>Monto</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.000000000000000001" placeholder="Introduce el monto" {...field} />
+                      <Input 
+                        type="text" 
+                        pattern="^\d*\.?\d*$"
+                        placeholder="Introduce el monto" 
+                        {...field} 
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.]/g, '');
+                          if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                            field.onChange(value);
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">Transferir</Button>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  'Transferir'
+                )}
+              </Button>
             </form>
           </Form>
         )}
